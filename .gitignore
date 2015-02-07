@@ -1,4 +1,6 @@
 lightspeed
+data
+*.mat
 
 # Created by https://www.gitignore.io
 

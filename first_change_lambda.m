@@ -5,8 +5,7 @@ clear;
 %lambdas = [100,200,300];
 %lambdas = [100];
 
-%variance_norms = [10:10:80]*100;
-variance_norms = [1000];
+variance_norms = [1000,6000,8000];
 
 N = floor(sqrt(numel(variance_norms)));
 M = ceil((numel(variance_norms))/N);
@@ -62,7 +61,7 @@ for idx = 1:numel(variance_norms)
     for t=1:T
       % Evaluate the predictive distribution for the new datum under each of
       % the parameters.  This is the standard thing from Bayesian inference.
-      variance = betaT.*(kappaT+1)./(alphaT.*kappaT);
+      variance = betaT.*(kappaT+1)./(alphaT.*kappaT)/variance_norm;
       predprobs = studentpdf(X(t), muT, ...
                              variance, ...
                              2 * alphaT);
@@ -115,7 +114,7 @@ for idx = 1:numel(variance_norms)
     for point=2:T
         if maxes(point-1) > maxes(point)
             hold(ax(2), 'on'); 
-            plot(ax(2), point, X(point), 'O',...
+            plot(ax(2), point-1, X(point-1), 'O',...
                 'MarkerEdgeColor','k',...
                 'MarkerFaceColor','w',...
                 'MarkerSize',5);

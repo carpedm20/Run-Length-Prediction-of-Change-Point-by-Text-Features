@@ -8,3 +8,4 @@ function p = studentpdf(x, mu, var, nu)
   
   p = c .* (1 + (1./(nu.*var)).*(x-mu).^2).^(-(nu+1)/2);
   
+  a = 1;
