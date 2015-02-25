@@ -1,19 +1,10 @@
 clear;
-companies = {'GOOGL','AAPL','IBM','MSFT','FB'};
-companies = {'IBM'};
+years = [{2010;2014}];
 
-companies = {'EUR','KRW','JPY'};
-%companies = {'EUR'};
-
-years = [{2010;2010},{2011;2011},{2012;2012},{2013;2013},{2014;2014},{2010;2014}];
-%years = [{2011;2012}];
-%years = [{2010;2015}];
 lambda = 250;
-
-%companies = {'GOOGL'};
-%years = [2014];
 scale = 4000;
-%scale = 4000;
+
+companies = {'avengers','frozen','inception','knight'}
 
 for idx=companies
     year_total = [];
@@ -21,61 +12,34 @@ for idx=companies
     
     company = idx{1};
     
-    if strcmp(company,'FB')
-        years = [{2012;2012},{2013;2013},{2014;2014},{2012;2014}];
-    else
-        years = [{2010;2010},{2011;2011},{2012;2012},{2013;2013},{2014;2014},{2010;2014}];
-    end
+    years = [{2010;2014}];
     
     for year=years
         year_1 =  num2str(year{1});
         year_2 =  num2str(year{2});
 
-        if year{1}==2010 && year{2}==2014
-            X = year_total;
-            date = date_total;
-        else
-            hazard_func  = @(r) constant_hazard(r, lambda);
+        hazard_func  = @(r) constant_hazard(r, lambda);
 
-            mu0    = 0;
-            kappa0 = 1;
-            alpha0 = 1;
-            beta0  = 1;
+        mu0    = 0;
+        kappa0 = 1;
+        alpha0 = 1;
+        beta0  = 1;
 
-            start_date = sprintf('01-jan-%s', year_1);
-            end_date = sprintf('31-dec-%s', year_2);
-            start_date = sprintf('%s-1-1', year_1);
-            end_date = sprintf('%s-12-31', year_1);
+        start_date = sprintf('01-jan-%s', year_1);
+        end_date = sprintf('31-dec-%s', year_2);
+        start_date = sprintf('%s-1-1', year_1);
+        end_date = sprintf('%s-12-31', year_1);
 
-            %d1 = get_gf_histdata(company, 'start', start_date, 'end', end_date);
-            d1 = get_currency_histdata(company, start_date, end_date);
+        %d1 = get_gf_histdata(company, 'start', start_date, 'end', end_date);
+        %d1 = get_currency_histdata(company, start_date, end_date);
 
-            date = fliplr(d1.date');
-            X = fliplr(d1.open');
-            X = X(1:end);
+        dfin = fopen(sprintf('%s.csv', company), 'r');
+        datin = textscan(dfin, '%s%f', 'Delimiter','\t');
 
-            if isnan(X(1))
-                X = X(2:end);
-            end
-
-            if isnan(X(end))
-                X = X(1:end-1);
-            end
-            
-            if strcmp(company, 'JPY')
-                X = X*10;
-            end
-            if strcmp(company, 'CNY')
-                X = X*100;
-            end
-            if strcmp(company, 'EUR')
-                X = X*100;
-            end
-            
-            year_total = [year_total,X];
-            date_total = [date_total,date];
-        end
-
+        %table = readtable(company,'Delimiter','\t','ReadVariableNames',false)
+        date = datestr(datin{1,1})
+        X = datin{1,2}'
+        
         [n, T] = size(X);
 
         % Plot the data and we'll have a look.

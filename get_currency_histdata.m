@@ -31,7 +31,12 @@ function [stock_data] = get_currency_histdata(stock, start_date, end_date)
 % 'http://www.google.com/finance/historical?cid=?&startdate=01+jan,+2010&enddate=31+dec,+2011&output=csv'
 %'http://www.google.com/finance/historical?cid=2460771&startdate=01+jan,+2010&enddate=31+dec,+2011&output=csv'
 % http://www.oanda.com/lang/ko/currency/historical-rates/download?quote_currency=EUR&end_date=2015-2-25&start_date=2010-1-8&period=daily&display=absolute&rate=0&data_range=c&price=bid&view=graph&base_currency_0=USD&download=csv
-url=['http://www.oanda.com/lang/en/currency/historical-rates/download?quote_currency=USD&start_date=' start_date '&end_date=' end_date '&period=daily&display=absolute&rate=0&data_range=c&price=bid&view=graph&base_currency_0=' stock '&download=csv']; 
+
+if strcmp(stock, 'KRW') || strcmp(stock, 'JPY') || strcmp(stock, 'EUR')
+    url=['http://www.oanda.com/lang/en/currency/historical-rates/download?quote_currency=USD&start_date=' start_date '&end_date=' end_date '&period=daily&display=absolute&rate=0&data_range=c&price=bid&view=graph&base_currency_0=' stock '&download=csv']; 
+else
+    url=['http://www.oanda.com/lang/en/currency/historical-rates/download?quote_currency=' stock '&start_date=' start_date '&end_date=' end_date '&period=daily&display=absolute&rate=0&data_range=c&price=bid&view=graph&base_currency_0=USD&download=csv']; 
+end
 
 %get data
 [gfdata, gfstatus] = urlread(url);
