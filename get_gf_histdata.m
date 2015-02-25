@@ -63,7 +63,7 @@ while (iarg<nargin-1)
                     ipar = varargin{iarg};
                     if (isstr(ipar))
                         endstr=strrep(ipar,'/','-');
-                        enddate=[startstr(1:2) '+' startstr(4:6) ',+' startstr(8:11)];
+                        enddate=[endstr(1:2) '+' endstr(4:6) ',+' endstr(8:11)];
                     else
                         error('no valid end date supplied (use a string)');
                     end;
@@ -96,7 +96,9 @@ end
 %% Get stock historical data
 
 %make URL
-url=['http://www.google.com/finance/historical?q=' stock '&histperiod' period '&startdate=' startdate '&enddate' enddate '&output=csv']; 
+% http://www.google.com/finance/historical?q=EUR&histperiod=daily&startdate=01+jan,+2010&enddate=31+dec,+2011&output=csv
+% http://www.google.com/finance/historical?cid=64295284217774&startdate=Feb+2%2C+2014&enddate=Feb+28%2C+2015&num=30&ei=5eXtVPDXHNSFuQTQ0oHYDA&output=csv
+url=['http://www.google.com/finance/historical?q=' stock '&histperiod=' period '&startdate=' startdate '&enddate=' enddate '&output=csv']; 
 
 %get data
 [gfdata, gfstatus] = urlread(url);

@@ -1,40 +1,68 @@
 clear;
-companies = {'GOOGL','AAPL','FB'};
-years = [2010,2011,2012,2013,2014];
+%companies = {'GOOGL','AAPL','IBM','MSFT','FB'};
+companies = {'IBM'};
+
+%companies = {'EUR','KRW','JPY','CNY'};
+%companies = {'KRW'};
+
+years = [{2010;2010},{2011;2011},{2012;2012},{2013;2013},{2014;2014},{2010;2014}];
+%years = [{2011;2012}];
+%years = [{2010;2015}];
+lambda = 250;
 
 %companies = {'GOOGL'};
 %years = [2014];
-scale = 5000;
+scale = 4000;
+%scale = 4000;
 
 for idx=companies
+    year_total = []
+    date_total = []
     for year=years
-        company = idx{1};
-        
-        lambda        = 200;
-        hazard_func  = @(r) constant_hazard(r, lambda);
+        if year{1}==2010 && year{2}==2015
+            X = year_total;
+            date = date_total;
+        else
+            company = idx{1};
+            year_1 =  num2str(year{1});
+            year_2 =  num2str(year{2});
 
-        mu0    = 0;
-        kappa0 = 1;
-        alpha0 = 1;
-        beta0  = 1;
+            hazard_func  = @(r) constant_hazard(r, lambda);
 
-        start_date = sprintf('01-jan-%s', num2str(year));
-        end_date = sprintf('31-dec-%s', num2str(year));
+            mu0    = 0;
+            kappa0 = 1;
+            alpha0 = 1;
+            beta0  = 1;
 
-        d1 = get_gf_histdata(company, 'start', start_date, 'end', end_date);
+            start_date = sprintf('01-jan-%s', year_1);
+            end_date = sprintf('31-dec-%s', year_2);
+            %start_date = sprintf('%s-1-1', year_1);
+            %end_date = sprintf('%s-12-31', year_1);
 
-        X = fliplr(d1.open');
-        X = X(1:end);
-        
-        if isnan(X(1))
-            X = X(2:end);
+            d1 = get_gf_histdata(company, 'start', start_date, 'end', end_date);
+            %d1 = get_currency_histdata(company, start_date, end_date);
+
+            date = fliplr(d1.date');
+            X = fliplr(d1.open');
+            X = X(1:end);
+
+            if isnan(X(1))
+                X = X(2:end);
+            end
+
+            if isnan(X(end))
+                X = X(1:end-1);
+            end
+            
+            year_total = [year_total,X];
+            date_total = [date_total,date];
         end
-        
+
         [n, T] = size(X);
 
         % Plot the data and we'll have a look.
         subplot(2,1,1);
-        %plot([1:T]', X, 'b-');
+        plot([1:T]', X, 'b-');
         grid;
 
         % Now we have some data in X and it's time to perform inference.
@@ -123,24 +151,9 @@ for idx=companies
                     'MarkerSize',5);
             end
         end
-        file_name = sprintf('%s-%s.mat', company, num2str(year));
+        file_name = sprintf('%s-%s-%s-%s-%s.mat', company, num2str(lambda), num2str(scale), year_1, year_2);
         disp(file_name)
         
-        save(file_name, 'maxes', 'R', 'X');
+        save(file_name, 'maxes', 'R', 'X', 'date');
     end
-end
-
-
-% Use exportfig to save the image.  You might not have this installed.
-if 0
-  exportfig(gcf, 'gaussdemo.png', ...
-            'Format',     'png', ...
-            'Width',      8,   ...
-            'Height',     8,   ...
-            'FontMode',   'fixed', ...
-            'FontSize',   10, ...
-            'LineMode',   'fixed', ...
-            'LineWidth',  0.5, ...
-            'Color',      'rgb', ...
-            'Bounds',     'loose');
 end
