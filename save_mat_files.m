@@ -1,9 +1,9 @@
 clear;
 companies = {'GOOGL','AAPL','IBM','MSFT','FB'};
-companies = {'IBM'};
+companies = {'AAPL'};
 
-companies = {'EUR','KRW','JPY'};
-%companies = {'EUR'};
+%companies = {'EUR','KRW','JPY'};
+%companies = {'KRW'};
 
 years = [{2010;2010},{2011;2011},{2012;2012},{2013;2013},{2014;2014},{2010;2014}];
 %years = [{2011;2012}];
@@ -27,10 +27,21 @@ for idx=companies
         years = [{2010;2010},{2011;2011},{2012;2012},{2013;2013},{2014;2014},{2010;2014}];
     end
     
+    %years = [{2010;2010}];
+    years = [{2014;2014}];
+    
     for year=years
         year_1 =  num2str(year{1});
         year_2 =  num2str(year{2});
-
+        
+        load(sprintf('./mat/%s-prob-%s-%s.mat', company, year_1, year_2));
+        load(sprintf('./mat/%s-weight-%s-%s.mat', company, year_1, year_2));
+        load(sprintf('./mat/%s-dic-%s-%s.mat', company, year_1, year_2));
+        load(sprintf('./mat/%s-count-%s-%s.mat', company, year_1, year_2));
+        %weight = normalize_var(weight,-1,1);
+        %word_count=word_count/sum(word_count);
+        
+        
         if year{1}==2010 && year{2}==2014
             X = year_total;
             date = date_total;
@@ -44,11 +55,11 @@ for idx=companies
 
             start_date = sprintf('01-jan-%s', year_1);
             end_date = sprintf('31-dec-%s', year_2);
-            start_date = sprintf('%s-1-1', year_1);
-            end_date = sprintf('%s-12-31', year_1);
+            %start_date = sprintf('%s-1-1', year_1);
+            %end_date = sprintf('%s-12-31', year_1);
 
-            %d1 = get_gf_histdata(company, 'start', start_date, 'end', end_date);
-            d1 = get_currency_histdata(company, start_date, end_date);
+            d1 = get_gf_histdata(company, 'start', start_date, 'end', end_date);
+            %d1 = get_currency_histdata(company, start_date, end_date);
 
             date = fliplr(d1.date');
             X = fliplr(d1.open');
@@ -75,8 +86,13 @@ for idx=companies
             year_total = [year_total,X];
             date_total = [date_total,date];
         end
+        
+        MMAX=198;
+        X = X(:,1:MMAX);
 
         [n, T] = size(X);
+        prob(:,end+T)=1;
+        prob(prob==0)=1;
 
         % Plot the data and we'll have a look.
         subplot(2,1,1);
@@ -106,9 +122,45 @@ for idx=companies
         % Keep track of the maximums.
         maxes  = zeros([T+1]);
 
+        P = zeros([T+1 T]);
         % Loop over the data like we're seeing it all for the first time.
+        %for t=1:10
         for t=1:T
-
+          %cur_date = datestr(datenum(date{t},'dd-mm-yy'),'yyyymmdd');
+          %eval(sprintf('cur_articles=d%s;',strrep(cur_date,'-','')));
+          
+%           for x=0:t
+%               y = t-x;
+%               d = datestr(datenum(date{t},'dd-mm-yy')-x,'yyyymmdd');
+%               eval(sprintf('cur_articles=d%s;',strrep(d,'-','')));
+%               
+%               k=0;
+%               l=0;
+%               suc=0;
+%               fail=0;
+%               for i_news=1:length(cur_articles);
+%                   words = cur_articles(i_news);
+%                   words = words{1:1};
+%                   for i_word=1:length(words);
+%                       word = words(i_word)+1;
+%                       if weight(word) ~= 0
+%                           run_prob = prob(word,:)/sum(prob(word,:));
+%                           tmp1 = run_prob(1,y+2) * exp(-x/(weight(word))) / exppdf(y+1,lambda);
+%                           tmp2 = run_prob(1,1) * exp(-x/(weight(word))) / exppdf(y+1,lambda);
+%                           if tmp1 ~= 0 && isinf(tmp1) ~= 1 && tmp2 ~= 0 && isinf(tmp2) ~= 1
+%                             k = k + log(tmp1);
+%                             l = l + log(tmp2);
+%                           end
+%                       end
+%                   end;
+%               end;
+%               %disp(sprintf('%f,%f',l,k))
+%               z=1/(1+exp(l-k));
+%               P(t,x+1)=z;
+%               %disp(z)
+%               %disp(sprintf('%d,%d,%f,%d',suc,fail, z, l-k))
+%           end;
+          
           % Evaluate the predictive distribution for the new datum under each of
           % the parameters.  This is the standard thing from Bayesian inference.
           predprobs = studentpdf(X(t), muT, ...
@@ -170,8 +222,12 @@ for idx=companies
             end
         end
         file_name = sprintf('%s-%s-%s-%s-%s.mat', company, num2str(lambda), num2str(scale), year_1, year_2);
+        file_name = sprintf('%s-%s-%s-%s-%s-P.mat', company, num2str(lambda), num2str(scale), year_1, year_2);
         disp(file_name)
         
+        if ~exist(pfile_name, 'file')
+            save(pfile_name, 'P','K');
+        end
         save(file_name, 'maxes', 'R', 'X', 'date');
     end
 end

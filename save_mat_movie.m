@@ -1,10 +1,11 @@
 clear;
-years = [{2010;2014}];
+years = [{2008;2009}];
 
 lambda = 250;
 scale = 4000;
 
-companies = {'avengers','frozen','inception','knight'}
+%companies = {'avengers','frozen','inception','knight'}
+companies = {'knight'}
 
 for idx=companies
     year_total = [];
@@ -12,12 +13,26 @@ for idx=companies
     
     company = idx{1};
     
-    years = [{2010;2014}];
+    years = [{2008;2009}];
     
     for year=years
         year_1 =  num2str(year{1});
         year_2 =  num2str(year{2});
 
+        MMAX = 200
+        pfile_name = sprintf('%s-%s-%s-%s-%s-P-%d.mat', company, num2str(lambda), num2str(scale), year_1, year_2, MMAX);
+        
+        if exist(pfile_name, 'file')
+            load(pfile_name);
+        end
+        %load('knight-250-4000-2014-2014-P-save.mat')
+        load(sprintf('./mat/%s-prob-%s-%s.mat', company, year_1, year_2));
+        load(sprintf('./mat/%s-weight-%s-%s.mat', company, year_1, year_2));
+        load(sprintf('./mat/%s-dic-%s-%s.mat', company, year_1, year_2));
+        load(sprintf('./mat/%s-count-%s-%s.mat', company, year_1, year_2));
+        weight = normalize_var(weight,0,1);
+        word_count=word_count/sum(word_count);
+        
         hazard_func  = @(r) constant_hazard(r, lambda);
 
         mu0    = 0;
@@ -70,9 +85,75 @@ for idx=companies
         % Keep track of the maximums.
         maxes  = zeros([T+1]);
 
+        if ~exist('P') || ~exist('K')
+            %P = zeros([T+1 1]);
+            P = zeros([T+1 T]);
+            K = zeros([T+1 T]);
+        end
+        
         % Loop over the data like we're seeing it all for the first time.
         for t=1:T
 
+            if sum(P(t,:))==0
+                d = datestr(datenum(date(t,:),'dd-mmm-yyyy'),'yyyymmdd');
+                eval(sprintf('cur_articles=d%s;',strrep(d,'-','')));
+                
+                for x=1:t
+                    y = t-x;
+                    k=0;
+                    l=0;
+                    for i_news=1:length(cur_articles);
+                        words = cur_articles(i_news);
+                        words = words{1:1};
+                        for i_word=1:length(words);
+                            word = words(i_word)+1;
+                            if weight(word) ~= 0
+                                %run_prob = prob(word,:)/sum(prob(word,:));
+                                run_prob = smoothts(prob(word,:)/sum(prob(word,:)),'g');
+                                tmp1 = log(run_prob(1,y+2)) + log(exppdf(x,weight(word))) - log(exppdf(y+1,lambda));
+                                tmp2 = log(run_prob(1,1)) + log(exppdf(x,weight(word))) - log(exppdf(y+1,lambda));% + log(1/lambda) ;
+                                if tmp1 ~= 0 && isinf(tmp1) ~= 1 && tmp2 ~= 0 && isinf(tmp2) ~= 1
+                                    k = k + tmp1 - log(word_count(word));
+                                    l = l + tmp2 - log(word_count(word));
+                                end
+                            end
+                        end;
+                    end;
+                    %z=1/(1+exp(l-k));
+                    P(t,x)=k-l;
+                    K(t,x)=l-l;
+                end;
+                %                   for i_news=1:length(cur_articles);
+                %                       words = cur_articles(i_news);
+                %                       if class(words) ~= 'cell'
+                %                           continue
+                %                       end
+                %                       words = words{1:1};
+                %                       for i_word=1:length(words);
+                %                           word = words(i_word)+1;
+                %                           if weight(word) ~= 0
+                %                               run_prob = smoothts(prob(word,:)/sum(prob(word,:)),'g');
+                %                               %run_prob = prob(word,:)/sum(prob(word,:));
+                %                               %tmp1 = run_prob(1,y+2) * exp(-x/(weight(word))) / exppdf(y+1,lambda);
+                %                               %tmp2 = run_prob(1,1) * exp(-x/(weight(word))) / exppdf(y+1,lambda);
+                %                               tmp1 = log(run_prob(1,y+2)) ;%+  log(weight(word)-x); %log(exp(-x/(weight(word)))); %- log(exppdf(y+1,lambda));
+                %                               tmp2 = log(run_prob(1,1)) ;%+ log(1/lambda); %log(exp(-x/(weight(word)))); %- log(exppdf(y+1,lambda));
+                %                               if tmp1 ~= 0 && isinf(tmp1) ~= 1 && tmp2 ~= 0 && isinf(tmp2) ~= 1
+                %                                 %k = k + log(tmp1);
+                %                                 %l = l + log(tmp2);
+                %                                 k = k + (tmp1);
+                %                                 l = l + (tmp2);
+                %                               end
+                %                           end
+                %                       end;
+                %                   end;
+                %                   %disp(sprintf('%f,%f',l,k))
+                %                   %disp(z)
+                %                   %disp(sprintf('%d,%d,%f,%d',suc,fail, z, l-k))
+                %               z=1/(1+exp(l-k));
+                %               P(t)=z;
+            end;
+            
           % Evaluate the predictive distribution for the new datum under each of
           % the parameters.  This is the standard thing from Bayesian inference.
           predprobs = studentpdf(X(t), muT, ...
@@ -136,6 +217,7 @@ for idx=companies
         file_name = sprintf('%s-%s-%s-%s-%s.mat', company, num2str(lambda), num2str(scale), year_1, year_2);
         disp(file_name)
         
+        save(pfile_name, 'P','K');
         save(file_name, 'maxes', 'R', 'X', 'date');
     end
 end
