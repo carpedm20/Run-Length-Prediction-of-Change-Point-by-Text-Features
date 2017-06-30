@@ -1,11 +1,1 @@
-Run Length Prediction of Change Point by Text Features
-======================================================
-
-Code for *Run Length Prediction of Change Point by Text Features*
-
-Copyright
-=========
-
-Copyright © 2014 Kim Tae Hoon.
-
-The MIT License (MIT)
+Code for [Reading documents for bayesian Online Change Point Detection](http://sail.unist.ac.kr/papers/EMNLP15KimTChoiJ.pdf)
